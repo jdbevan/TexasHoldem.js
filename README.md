@@ -6,4 +6,4 @@
 
 4. Structure to store bets and keep track of chips/score.
 
-5. Gameplay.
+5. [Gameplay](http://en.wikipedia.org/wiki/Texas_Holdem).
