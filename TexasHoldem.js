@@ -87,7 +87,7 @@ var outerPoker = (function() {
         		//Shuffle cards
         		this.shuffle(this.cards);
         		//Deal cards
-        		this.deal(this.cards, 4, 3);
+        		this.deal(this.cards, 4, 2);
         	}
 	};
         
