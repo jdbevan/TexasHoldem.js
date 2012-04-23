@@ -1,6 +1,6 @@
 1. <del>Structure to store deck(s) of cards. Cards need value and denotion.</del>
 
-2. Structure to store hands in order of score. E.g. flush, pair, straight...
+2. Structure to store [hands](http://en.wikipedia.org/wiki/List_of_poker_hands) in order of score. E.g. flush, pair, straight...
 
 3. <del>Method of shuffling cards? Or at least selecting at random and storing removed cards.</del>
 
