@@ -13,8 +13,11 @@ Object.prototype.clone = function() {
 var outerPoker = (function() {
 
         var poker = {
+	        ready: false,
         	cards: [],
+        	board: [],
         	player: [],
+        	hands: [],
         	newDeck: function () {
         		var cards = [];
         		for(var i=1; i<14; i++) {
@@ -57,13 +60,16 @@ var outerPoker = (function() {
 	    		}
         		return cards;
         	},
+        	randCard: function(max) {
+        		return Math.round(Math.random() * (max-1));
+        	},
         	shuffle: function(deck) {
         		var l = deck.length,
-        			k = Math.round(Math.random() * (l-1));
+        			k = this.randCard(l); //Math.round(Math.random() * (l-1));
         		for (var i=0; i<l*l*l; i++) {
         			deck.push(deck[k].clone());
         			deck.splice(k, 1);
-        			k = Math.round(Math.random() * (l-1));
+        			k = this.randCard(l); //Math.round(Math.random() * (l-1));
         		}
         	},
         	deal: function(deck, num_players, num_cards) {
@@ -75,19 +81,140 @@ var outerPoker = (function() {
         			this.player[p] = {};
        				this.player[p].hand = [];
         			for (var c=0; c<num_cards; c++) {
-        				var card_position = Math.round(Math.random() * (deck.length - 1));
+        				var card_position = this.randCard(deck.length); //Math.round(Math.random() * (deck.length - 1));
         				this.player[p].hand.push(deck[card_position].clone());
         				deck.splice(card_position, 1);
         			}
         		}
         	},
+        	community_deal: function(deck, num_cards){
+        		if (deck.length < 1) return false;
+
+        		for(var p=0; p<num_cards; p++) {
+    				var card_position = this.randCard(deck.length);
+    				this.board.push(deck[card_position].clone());
+    				deck.splice(card_position, 1);
+        		}
+        	},
+        	burn: function(deck) {
+        		if (deck.length < 1) return false;
+        		
+        		deck.splice(this.randCard(deck.length), 1);
+        	},
+        	flop: function(deck) {
+        		return this.community_deal(deck, 3);
+        	},
+        	turn:function(deck) {
+        		return this.community_deal(deck, 1);
+        	}, 
+        	river: function(deck) {
+        		return this.turn(deck);
+        	},
+        	combine_cards: function(hand, board) {
+				var cards = [];
+				for(var j=0; j<hand.length; j++) {
+					cards.push(hand[j].clone());
+				}
+				for(var j=0; j<board.length; j++) {
+					cards.push(board[j].clone());
+				}
+        		cards.sort(
+        			function(a,b) {
+						if (a.suit == b.suit) {
+							return (a.value - b.value);
+						} else {
+							if (a.suit > b.suit) {
+								return 1;
+							} else if (a.suit < b.suit) {
+								return -1;
+							} else {
+								return 0;
+							}
+						}
+        			}
+        		);
+        		return cards;
+        	},
         	init: function() {
+        	
+        		this.addHand("straight flush", function(cards) {
+        			var fourSameSuit = false,
+        				incremental = false,
+        				suits = {};
+        				
+					for (var i=0; i<cards.length; i++) {
+						if (suits[cards[i].suit] === undefined) {
+							suits[cards[i].suit] = 1;
+						} else {
+							suits[cards[i].suit]++;
+							if (suits[cards[i].suit]>3){
+								fourSameSuit = true;
+								break;
+							}
+						}
+					}
+					
+					if (fourSameSuit) {
+						//
+					}
+        		}, 0);
+        	
+        	
+        	
+        		this.ready = true;
+        		
         		//Create deck
         		this.cards = this.newDeck();
         		//Shuffle cards
         		this.shuffle(this.cards);
         		//Deal cards
         		this.deal(this.cards, 4, 2);
+        		this.draw(this.player[0].hand);
+        		this.draw(this.player[1].hand);
+        		this.draw(this.player[2].hand);
+        		this.draw(this.player[3].hand);
+        		//Burn
+        		this.burn(this.cards);
+        		//Community
+        		this.flop(this.cards);
+        		this.draw(this.board);
+        		//Burn
+        		this.burn(this.cards);
+        		//Community
+        		this.turn(this.cards);
+        		this.draw(this.board);
+        		//Burn
+        		this.burn(this.cards);
+        		//Community
+        		this.river(this.cards);
+        		this.draw(this.board);
+        	},
+        	draw: function(hand) {
+        		var p = document.createElement('p');
+				hand.sort(
+        			function(a,b) {
+						if (a.suit == b.suit) {
+							return (a.value - b.value);
+						} else {
+							if (a.suit > b.suit) {
+								return 1;
+							} else if (a.suit < b.suit) {
+								return -1;
+							} else {
+								return 0;
+							}
+						}
+        			}
+        		);
+        		for(var j=0;j<hand.length; j++) {
+        			var img = document.createElement('img');
+        			img.src = 'images/' + hand[j].name + hand[j].suit.toLowerCase() + '.jpg';
+        			p.appendChild(img);
+        		}
+        		document.body.appendChild(p);
+        	},
+        	addHand: function(name, func, priority) {
+        		this.hands[priority] = {"name": name, "function": func};
         	}
 	};
         
