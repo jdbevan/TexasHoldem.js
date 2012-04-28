@@ -20,7 +20,7 @@ var outerPoker = (function() {
         	hands: [],
         	newDeck: function () {
         		var cards = [];
-        		for(var i=1; i<14; i++) {
+        		for(var i=2; i<15; i++) {
         			switch (i) {
         				case 2: case 3:
         				case 4: case 5:
@@ -33,24 +33,24 @@ var outerPoker = (function() {
 		        			cards.push({"name": i, "suit": "Diamonds", "value": i});
 		        			break;
 		        		case 11:
-		        			cards.push({"name": "Jack", "suit": "Hearts", "value": 10});
-		        			cards.push({"name": "Jack", "suit": "Spades", "value": 10});
-		        			cards.push({"name": "Jack", "suit": "Clubs", "value": 10});
-		        			cards.push({"name": "Jack", "suit": "Diamonds", "value": 10});
+		        			cards.push({"name": "Jack", "suit": "Hearts", "value": i});
+		        			cards.push({"name": "Jack", "suit": "Spades", "value": i});
+		        			cards.push({"name": "Jack", "suit": "Clubs", "value": i});
+		        			cards.push({"name": "Jack", "suit": "Diamonds", "value": i});
 		        			break;
 		        		case 12:
-		        			cards.push({"name": "Queen", "suit": "Hearts", "value": 10});
-		        			cards.push({"name": "Queen", "suit": "Spades", "value": 10});
-		        			cards.push({"name": "Queen", "suit": "Clubs", "value": 10});
-		        			cards.push({"name": "Queen", "suit": "Diamonds", "value": 10});
+		        			cards.push({"name": "Queen", "suit": "Hearts", "value": i});
+		        			cards.push({"name": "Queen", "suit": "Spades", "value": i});
+		        			cards.push({"name": "Queen", "suit": "Clubs", "value": i});
+		        			cards.push({"name": "Queen", "suit": "Diamonds", "value": i});
 		        			break;
 		        		case 13:
-		        			cards.push({"name": "King", "suit": "Hearts", "value": 10});
-		        			cards.push({"name": "King", "suit": "Spades", "value": 10});
-		        			cards.push({"name": "King", "suit": "Clubs", "value": 10});
-		        			cards.push({"name": "King", "suit": "Diamonds", "value": 10});
+		        			cards.push({"name": "King", "suit": "Hearts", "value": i});
+		        			cards.push({"name": "King", "suit": "Spades", "value": i});
+		        			cards.push({"name": "King", "suit": "Clubs", "value": i});
+		        			cards.push({"name": "King", "suit": "Diamonds", "value": i});
 		        			break;
-		        		case 1:
+		        		case 14:
 		        			cards.push({"name": "Ace", "suit": "Hearts", "value": i});
 		        			cards.push({"name": "Ace", "suit": "Spades", "value": i});
 		        			cards.push({"name": "Ace", "suit": "Clubs", "value": i});
@@ -118,6 +118,7 @@ var outerPoker = (function() {
 				for(var j=0; j<board.length; j++) {
 					cards.push(board[j].clone());
 				}
+				/*
         		cards.sort(
         			function(a,b) {
 						if (a.suit == b.suit) {
@@ -132,35 +133,232 @@ var outerPoker = (function() {
 							}
 						}
         			}
-        		);
+        		); */
         		return cards;
+        	},
+        	checkHands: function(cards) {
+        		// For each of the cards
+        		for (var i=0; i<cards.length; i++) {
+        			// For as many times as is required to
+        			// cover the remaining cards
+        			for (var skip = 0; skip <= cards.length - 5; skip++) {
+		    			var hand = [];
+		    			
+		    			for (var j=i; j<cards.length + i; j++) {
+		    				if (skip <= cards.length - 5 && j<=skip+i && j != i) { continue; }
+		    				
+		    				hand.push(cards[j % cards.length]);
+		    				// Quit if 5 cards in this hand
+		    				if (hand.length == 5) {
+		    					break;
+		    				}
+		    			}
+		    			
+		    			/* Process this hand here */
+		    			
+        			}
+        		}
         	},
         	init: function() {
         	
         		this.addHand("straight flush", function(cards) {
-        			var fourSameSuit = false,
-        				incremental = false,
-        				suits = {};
+        			var suit,
+        				numCards = cards.length;
         				
-					for (var i=0; i<cards.length; i++) {
-						if (suits[cards[i].suit] === undefined) {
-							suits[cards[i].suit] = 1;
-						} else {
-							suits[cards[i].suit]++;
-							if (suits[cards[i].suit]>3){
-								fourSameSuit = true;
-								break;
-							}
-						}
-					}
-					
-					if (fourSameSuit) {
-						//
-					}
+        			/* Same suit check */
+        			for (card in cards) {
+        				if (suit === undefined) {
+        					suit = card.suit;
+        				} else if (suit !== card.suit) {
+        					return false;
+        				}
+        			}
+        			
+        			/* Sort them high-to-low */
+        			cards.sort(function(a,b){
+        				return b.value - a.value;
+        			});
+
+        			/* Consecutive */        			
+        			if (cards[0].value - cards[numCards-1].value != numCards) {
+						// Check for Ace
+        				if (cards[0].value == 14) {
+        					if (cards[1].value - 1 != numCards) {
+        						return false;
+        					} else {
+        						return cards[1];
+        					}
+        				} else {
+        					return false;
+        				}
+        			}
+        			
+        			/* Returns the high card */
+        			return cards[0];
+        			
         		}, 0);
-        	
-        	
-        	
+        		this.addHand("four of a kind", function(cards) {
+        			var values = [];
+        			/* Count how many of each value card there are */
+        			for(card in cards) {
+        				if (values[card.value] == undefined) {
+        					values[card.value] = 1;
+        				} else {
+        					values[card.value]++;
+        				}
+        			}
+        			// If more than 2 types of card, fail
+        			if (values.length > 2) {
+        				return false;
+        			}
+        			// If there isnt a card type with 1 or 4 cards, fail
+        			if (values.indexOf(1) < 0 || values.indexOf(4) < 0) {
+        				return false;
+        			}
+        			// Return high card
+        			return cards[values.indexOf(4)];
+        		});
+        		this.addHand("full house", function(cards) {
+        			var values = [];
+        			/* Count how many of each value card there are */
+        			for(card in cards) {
+        				if (values[card.value] == undefined) {
+        					values[card.value] = 1;
+        				} else {
+        					values[card.value]++;
+        				}
+        			}
+        			// If more than 2 types of card, fail
+        			if (values.length > 2) {
+        				return false;
+        			}
+        			// If there isnt a card type with 2 or 3 cards, fail
+        			if (values.indexOf(2) < 0 || values.indexOf(3) < 0) {
+        				return false;
+        			}
+        			// Return high card
+        			return cards[values.indexOf(3)];
+        		});
+        		this.addHand("flush", function(cards){
+        			var suit,
+        				numCards = cards.length;
+        				
+        			/* Same suit check */
+        			for (card in cards) {
+        				if (suit === undefined) {
+        					suit = card.suit;
+        				} else if (suit !== card.suit) {
+        					return false;
+        				}
+        			}
+        			
+        			/* Sort them high-to-low */
+        			cards.sort(function(a,b){
+        				return b.value - a.value;
+        			});
+        			
+        			return cards;
+        		});
+        		this.addHand("straight", function(cards){
+        			/* Sort them high-to-low */
+        			cards.sort(function(a,b){
+        				return b.value - a.value;
+        			});
+        			
+        			/* Check sequential */
+        			if (cards[cards.length-1].value - cards[0].value != cards.length) {
+        				return false;
+        			}
+        			
+        			/* Check multiple suits */
+        			var oneSuit = true,
+        				suit;
+        			for (card in cards) {
+        				if (suit === undefined) { suit = card.suit; }
+        				else if (suit != card.suit) { oneSuit = false; break; }
+        			}
+        			if (oneSuit) {
+        				return false;
+        			}
+        			
+        			return cards[0];
+        		});
+        		this.addHand("three of a kind", function(cards) {
+        			var values = [];
+        			/* Count how many of each value card there are */
+        			for(card in cards) {
+        				if (values[card.value] == undefined) {
+        					values[card.value] = 1;
+        				} else {
+        					values[card.value]++;
+        				}
+        			}
+        			// If not 3 types of card, fail
+        			if (values.length != 3) {
+        				return false;
+        			}
+        			// If no type has 3 cards, fail
+        			if (values.indexOf(3) < 0) {
+        				return false;
+        			}
+        			
+        			return cards[values.indexOf(3)];
+        		});
+        		this.addHand("two pair", function(cards) {
+        			var values = [];
+        			/* Count how many of each value card there are */
+        			for(card in cards) {
+        				if (values[card.value] == undefined) {
+        					values[card.value] = 1;
+        				} else {
+        					values[card.value]++;
+        				}
+        			}
+        			// If not 3 types of card, fail
+        			if (values.length != 3) {
+        				return false;
+        			}
+        			// If no type has 1 card, fail
+        			if (values.indexOf(1) < 0 && values.indexOf(2) < 0) {
+        				return false;
+        			}
+        			
+        			return cards;
+        		});
+        		this.addHand("one pair", function(cards) {
+        			var values = [];
+        			/* Count how many of each value card there are */
+        			for(card in cards) {
+        				if (values[card.value] == undefined) {
+        					values[card.value] = 1;
+        				} else {
+        					values[card.value]++;
+        				}
+        			}
+        			// If not 3 types of card, fail
+        			if (values.length != 4) {
+        				return false;
+        			}
+        			// If no type has 2 cards, fail
+        			if (values.indexOf(2) < 0) {
+        				return false;
+        			}
+        			
+        			/* Sort them high-to-low */
+        			cards.sort(function(a,b){
+        				return b.value - a.value;
+        			});
+        			
+        			// Needs returning in order of pair, then high-to-low
+        			return cards;
+        		});
+        		
+        		
+        		
+        		
+        		/*
+        		 * GAME DEAL/PLAY
+        		 */
         		this.ready = true;
         		
         		//Create deck
