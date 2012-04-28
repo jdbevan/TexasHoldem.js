@@ -139,6 +139,13 @@ var outerPoker = (function() {
         		return cards;
         	},
         	checkHands: function(cards) {
+    			// Sort low to high priority
+    			this.hands.sort(function(a,b){
+    				return a.priority - b.priority;
+    			});
+    			
+    			var matched_hands = [];
+    			
         		// For each of the cards
         		for (var i=0; i<cards.length; i++) {
         			// For as many times as is required to
@@ -155,23 +162,36 @@ var outerPoker = (function() {
 		    					break;
 		    				}
 		    			}
-		    			
 		    			/* Process this hand here */
-		    			
+		    			for (var possible_hand=0; possible_hand < this.hands.length; possible_hand++) {
+		    				debugger;
+		    				var check_hand = this.hands[possible_hand].check(hand);
+		    				if (check_hand !== false) {
+		    					matched_hands.push({"score": possible_hand, "hand_value": check_hand});
+		    					break;
+		    				}
+		    			}
         			}
         		}
+        		
+        		//Sort low to high
+        		matched_hands.sort(function(a,b) {
+        			return a.score - b.score;
+        		});
+        		
+        		return matched_hands[0];
         	},
         	init: function() {
         	
-        		this.addHand("straight flush", function(cards) {
+        		this.addHand(0, "straight flush", function(cards) {
         			var suit,
         				numCards = cards.length;
         				
         			/* Same suit check */
-        			for (card in cards) {
+        			for (var card=0; card<cards.length; card++) {
         				if (suit === undefined) {
-        					suit = card.suit;
-        				} else if (suit !== card.suit) {
+        					suit = cards[card].suit;
+        				} else if (suit !== cards[card].suit) {
         					return false;
         				}
         			}
@@ -182,10 +202,10 @@ var outerPoker = (function() {
         			});
 
         			/* Consecutive */        			
-        			if (cards[0].value - cards[numCards-1].value != numCards) {
+        			if (cards[0].value - cards[numCards-1].value != numCards-1) {
 						// Check for Ace
         				if (cards[0].value == 14) {
-        					if (cards[1].value - 1 != numCards) {
+        					if (cards[1].value - 1 != numCards-1) {
         						return false;
         					} else {
         						return cards[1];
@@ -199,18 +219,20 @@ var outerPoker = (function() {
         			return cards[0];
         			
         		}, 0);
-        		this.addHand("four of a kind", function(cards) {
-        			var values = [];
+        		this.addHand(1, "four of a kind", function(cards) {
+        			var values = [],
+        				distinct_values = 0;
         			/* Count how many of each value card there are */
-        			for(card in cards) {
-        				if (values[card.value] == undefined) {
-        					values[card.value] = 1;
+        			for(var card=0; card<cards.length; card++) {
+        				if (values[cards[card].value] == undefined) {
+        					values[cards[card].value] = 1;
+        					distinct_values++;
         				} else {
-        					values[card.value]++;
+        					values[cards[card].value]++;
         				}
         			}
         			// If more than 2 types of card, fail
-        			if (values.length > 2) {
+        			if (distinct_values > 2) {
         				return false;
         			}
         			// If there isnt a card type with 1 or 4 cards, fail
@@ -218,16 +240,17 @@ var outerPoker = (function() {
         				return false;
         			}
         			// Return high card
+        			/* Doesn't work */
         			return cards[values.indexOf(4)];
         		});
-        		this.addHand("full house", function(cards) {
+        		this.addHand(2, "full house", function(cards) {
         			var values = [];
         			/* Count how many of each value card there are */
-        			for(card in cards) {
-        				if (values[card.value] == undefined) {
-        					values[card.value] = 1;
+        			for(var card=0; card<cards.length; card++) {
+        				if (values[cards[card].value] == undefined) {
+        					values[cards[card].value] = 1;
         				} else {
-        					values[card.value]++;
+        					values[cards[card].value]++;
         				}
         			}
         			// If more than 2 types of card, fail
@@ -241,15 +264,15 @@ var outerPoker = (function() {
         			// Return high card
         			return cards[values.indexOf(3)];
         		});
-        		this.addHand("flush", function(cards){
+        		this.addHand(3, "flush", function(cards){
         			var suit,
         				numCards = cards.length;
         				
         			/* Same suit check */
-        			for (card in cards) {
+        			for (var card=0; card<cards.length; card++) {
         				if (suit === undefined) {
-        					suit = card.suit;
-        				} else if (suit !== card.suit) {
+        					suit = cards[card].suit;
+        				} else if (suit !== cards[card].suit) {
         					return false;
         				}
         			}
@@ -261,7 +284,7 @@ var outerPoker = (function() {
         			
         			return cards;
         		});
-        		this.addHand("straight", function(cards){
+        		this.addHand(4, "straight", function(cards){
         			/* Sort them high-to-low */
         			cards.sort(function(a,b){
         				return b.value - a.value;
@@ -275,9 +298,9 @@ var outerPoker = (function() {
         			/* Check multiple suits */
         			var oneSuit = true,
         				suit;
-        			for (card in cards) {
-        				if (suit === undefined) { suit = card.suit; }
-        				else if (suit != card.suit) { oneSuit = false; break; }
+        			for (var card=0; card<cards.length; card++) {
+        				if (suit === undefined) { suit = cards[card].suit; }
+        				else if (suit != cards[card].suit) { oneSuit = false; break; }
         			}
         			if (oneSuit) {
         				return false;
@@ -285,14 +308,14 @@ var outerPoker = (function() {
         			
         			return cards[0];
         		});
-        		this.addHand("three of a kind", function(cards) {
+        		this.addHand(5, "three of a kind", function(cards) {
         			var values = [];
         			/* Count how many of each value card there are */
-        			for(card in cards) {
-        				if (values[card.value] == undefined) {
-        					values[card.value] = 1;
+        			for(var card=0; card<cards.length; card++) {
+        				if (values[cards[card].value] == undefined) {
+        					values[cards[card].value] = 1;
         				} else {
-        					values[card.value]++;
+        					values[cards[card].value]++;
         				}
         			}
         			// If not 3 types of card, fail
@@ -306,14 +329,14 @@ var outerPoker = (function() {
         			
         			return cards[values.indexOf(3)];
         		});
-        		this.addHand("two pair", function(cards) {
+        		this.addHand(6, "two pair", function(cards) {
         			var values = [];
         			/* Count how many of each value card there are */
-        			for(card in cards) {
-        				if (values[card.value] == undefined) {
-        					values[card.value] = 1;
+        			for(var card=0; card<cards.length; card++) {
+        				if (values[cards[card].value] == undefined) {
+        					values[cards[card].value] = 1;
         				} else {
-        					values[card.value]++;
+        					values[cards[card].value]++;
         				}
         			}
         			// If not 3 types of card, fail
@@ -327,41 +350,65 @@ var outerPoker = (function() {
         			
         			return cards;
         		});
-        		this.addHand("one pair", function(cards) {
-        			var values = [];
+        		this.addHand(7, "one pair", function(cards) {
+        			var values = [],
+        				ordered_cards = [],
+        				pair_card_id;
         			/* Count how many of each value card there are */
-        			for(card in cards) {
-        				if (values[card.value] == undefined) {
-        					values[card.value] = 1;
+        			for(var card=0; card<cards.length; card++) {
+        				if (values[cards[card].value] == undefined) {
+        					values[cards[card].value] = 1;
         				} else {
-        					values[card.value]++;
+        					values[cards[card].value]++;
         				}
         			}
         			// If not 3 types of card, fail
         			if (values.length != 4) {
         				return false;
         			}
+        			pair_card_id = values.indexOf(2);
         			// If no type has 2 cards, fail
-        			if (values.indexOf(2) < 0) {
+        			if (pair_card_id < 0) {
         				return false;
         			}
+        			
+        			// Store 1 of the pair of catds first
+        			ordered_cards.push(cards[pair_card_id]);
         			
         			/* Sort them high-to-low */
         			cards.sort(function(a,b){
         				return b.value - a.value;
         			});
         			
+        			// Then everything else in desc order
+        			for(var card=0;card<cards.length; card++) {
+        				if (cards[card].suit != ordered_cards[0].suit && cards[card].value != ordered_cards[0].value) {
+        					ordered_cards.push(cards[card]);
+        				}
+        			}
+        			
         			// Needs returning in order of pair, then high-to-low
+        			return ordered_cards;
+        		});
+        		this.addHand(8, "high card", function(cards) {
+        			/* Sort them high-to-low */
+        			cards.sort(function(a,b){
+        				return b.value - a.value;
+        			});
+        			
         			return cards;
         		});
-        		
-        		
-        		
         		
         		/*
         		 * GAME DEAL/PLAY
         		 */
         		this.ready = true;
+        		
+        		var css = document.createElement('style');
+        		css.innerHTML = "p.player { display: inline; margin-right: 20px; }\n";
+        		/* Shrink images from 123px x 79px => 82px x 53px */
+        		css.innerHTML += "p img { width: 53px; height: 82px; }";
+        		document.head.appendChild(css);
         		
         		//Create deck
         		this.cards = this.newDeck();
@@ -369,10 +416,10 @@ var outerPoker = (function() {
         		this.shuffle(this.cards);
         		//Deal cards
         		this.deal(this.cards, 4, 2);
-        		this.draw(this.player[0].hand);
-        		this.draw(this.player[1].hand);
-        		this.draw(this.player[2].hand);
-        		this.draw(this.player[3].hand);
+        		for (var p=0; p<this.player.length; p++){
+        			this.draw(this.player[p].hand);
+        		}
+        		
         		//Burn
         		this.burn(this.cards);
         		//Community
@@ -388,9 +435,33 @@ var outerPoker = (function() {
         		//Community
         		this.river(this.cards);
         		this.draw(this.board);
+        		
+        		// Calculate best hand for each player
+        		for(var p=0; p<this.player.length; p++) {
+        			var all_cards = this.combine_cards(this.player[p].hand, this.board);
+        			this.player[p].hand_score = this.checkHands(all_cards);
+        		}
+        		// Sort by hand score (low-to-high)
+        		this.player.sort(function(a,b) {
+        			debugger;
+        			return a.hand_score.score - b.hand_score.score;
+        		});
+        		
+        		if (this.player[0].hand_score.score == this.player[1].hand_score.score) {
+        			console.log("Two players have same hand: " + this.hands[this.player[0].hand_score.score].name);
+        			console.log(this.player[0]);
+        			console.log(this.player[1]);
+        		} else {
+        			console.log("The winning player:");
+        			console.log(this.player[0]);
+        			//this.draw(this.player[0].hand);
+        		}
         	},
         	draw: function(hand) {
         		var p = document.createElement('p');
+        		if (hand.length == 2) {
+        			p.setAttribute("class", "player");
+        		}
 				hand.sort(
         			function(a,b) {
 						if (a.suit == b.suit) {
@@ -413,10 +484,10 @@ var outerPoker = (function() {
         		}
         		document.body.appendChild(p);
         	},
-        	addHand: function(name, func, priority) {
-        		this.hands[priority] = {"name": name, "function": func};
+        	addHand: function(priority, label, func) {
+        		this.hands[priority] = {"name": label, "check": func};
         	}
-	};
+		};
         
         return poker;
     })();
