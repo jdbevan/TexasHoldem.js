@@ -66,7 +66,7 @@ var outerPoker = (function() {
         	shuffle: function(deck) {
         		var l = deck.length,
         			k = this.randCard(l); //Math.round(Math.random() * (l-1));
-        		for (var i=0; i<l*l*l; i++) {
+        		for (var i=0; i<l*l; i++) {
         			deck.push(deck[k].clone());
         			deck.splice(k, 1);
         			k = this.randCard(l); //Math.round(Math.random() * (l-1));
@@ -77,10 +77,12 @@ var outerPoker = (function() {
         		if (num_cards < 0 || num_cards > deck.length) return false;
         		if (num_players < 0 || num_players*num_cards > deck.length) return false;
 
-        		for(var p=0; p<num_players; p++) {
-        			this.player[p] = {};
-       				this.player[p].hand = [];
-        			for (var c=0; c<num_cards; c++) {
+       			for (var c=0; c<num_cards; c++) {
+	        		for (var p=0; p<num_players; p++) {
+		    			if (this.player[p] == undefined) {
+		    				this.player[p] = {};
+		   					this.player[p].hand = [];
+		   				}
         				var card_position = this.randCard(deck.length); //Math.round(Math.random() * (deck.length - 1));
         				this.player[p].hand.push(deck[card_position].clone());
         				deck.splice(card_position, 1);
